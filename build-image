@@ -21,9 +21,9 @@ rm -rf "${CHROOT}"/{proc,sys,dev}/*
 # We need to add in some overhead, and empirically 7% seems to work. Just double
 # the size of the boot partition for updates.
 BOOTSIZE=$(du -s -B M "${CHROOT}/boot" | cut -f1 | tr -d 'M')
-BOOTSIZE=$((BOOTSIZE*2))
+BOOTSIZE=$((BOOTSIZE*3))
 ROOTSIZE=$(du -s -B M --exclude boot "${CHROOT}" | cut -f1 | tr -d 'M')
-ROOTSIZE=$((ROOTSIZE*107/100))
+ROOTSIZE=$((ROOTSIZE*107*2/100))
 
 # Create the image file with partitions and filesystems on a loopback device.
 BUILD=$(mktemp -d --suffix=_BUILD)
