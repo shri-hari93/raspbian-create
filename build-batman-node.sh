@@ -34,8 +34,7 @@ do
     esac
 shift
 done
-echo "${TYPE}"
-echo "${HOSTNAME}"
+
 CHROOT="${RASPBIAN_REMASTER_CHROOT:-./raspbian}"
 IMAGE="${RASPBIAN_REMASTER_IMAGE:-./images/raspbian.img}"
 "$(dirname "${BASH_SOURCE[0]}")"/build-raspbian "${CHROOT}"
