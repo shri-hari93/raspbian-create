@@ -10,7 +10,7 @@
 # raspberry pis each with hardcoded static IPs.
 if [[ $# -eq 0 ]] ; then
     echo "usage: ./build-batman-node -t [type] -n [hostname] -u [k3s_url] -k [k3s_token]"
-    return
+    exit
 fi
 
 while [[ "$#" -gt 0 ]]
