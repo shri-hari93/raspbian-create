@@ -18,18 +18,18 @@ do
     case $1 in 
         -h|--help)
         echo "usage: ./build-batman-node -t [type] -n [hostname] -u [k3s_url] -k [k3s_token]"
-        return      
-        -t|--type)
-        TYPE="type=$2"
+        exit;;
+        -t)
+        TYPE="$2"
         ;;
-        -n|--hostname)
-        HOSTNAME="hostname=$2"
+        -n)
+        HOSTNAME="$2"
         ;;
-        -u|--k3s_url)
-        K3S_URL="k3s_url=$2"
+        -u)
+        K3S_URL="$2"
         ;;
-        -k|--k3s_token)
-        K3S_TOKEN="k3s_token=$2"
+        -k)
+        K3S_TOKEN="$2"
         ;;
     esac
 shift
@@ -39,7 +39,7 @@ CHROOT="${RASPBIAN_REMASTER_CHROOT:-./raspbian}"
 IMAGE="${RASPBIAN_REMASTER_IMAGE:-./images/raspbian.img}"
 "$(dirname "${BASH_SOURCE[0]}")"/build-raspbian "${CHROOT}"
 
-chroot "${CHROOT}" apt-get install -y dhcpcd5 openresolv vim batctl isc-dhcp-server iptables wireless-tools sudo curl ssh
+chroot "${CHROOT}" apt-get install -y dhcpcd5 openresolv vim batctl iptables wireless-tools sudo curl ssh
 
 # # Set eth0 to use DHCP.
 cat << EOF > "${CHROOT}/etc/network/interfaces.d/eth0"
@@ -48,7 +48,10 @@ iface eth0 inet dhcp
 EOF
 
 case $TYPE in
-    "gateway")
+    gateway)
+        # Install dhcp server
+        chroot "${CHROOT}" apt-get install -y isc-dhcp-server
+
         # Set network configurations for BATMAN
         cat ./gateway/wlan0 > "${CHROOT}/etc/network/interfaces.d/wlan0"
         cat ./gateway/bat0 > "${CHROOT}/etc/network/interfaces.d/bat0"
@@ -58,8 +61,11 @@ case $TYPE in
         cat ./gateway/isc-dhcp-server > "${CHROOT}/etc/default/isc-dhcp-server"
 
         # Add configuration script
-        cat ./gateway/smart-garden-mesh.sh > "${CHROOT}/root/smart-garden-mesh.sh";;
-    "node")
+        cat ./gateway/smart-garden-mesh.sh > "${CHROOT}/root/smart-garden-mesh.sh"
+        cat ./gateway/port-forwarding.sh > "${CHROOT}/root/port-forwarding.sh"
+        chroot "${CHROOT}" /bin/bash -c "chmod +755 /root/port-forwarding.sh"
+        cat ./gateway/port-forwarding.service > "${CHROOT}/etc/systemd/system/port-forwarding.service";;
+    node)
         # Set network configurations for BATMAN
         cat ./node/wlan0 > "${CHROOT}/etc/network/interfaces.d/wlan0"
         cat ./node/bat0 > "${CHROOT}/etc/network/interfaces.d/bat0"
@@ -80,7 +86,7 @@ sed -i "1s/.*/${HOSTNAME}/" "${CHROOT}/etc/hostname"
 echo "batman-adv" >> "${CHROOT}/etc/modules"
 
 # # Add script for k3s installation
-echo "curl -sfL https://get.k3s.io | K3S_URL=${K3S_URL}:6443 K3S_TOKEN=${K3S_TOKEN} sh -" > "${CHROOT}/root/k3s_installation.sh"
+echo "curl -sfL https://get.k3s.io | K3S_URL=${K3S_URL} K3S_TOKEN=${K3S_TOKEN} sh -" > "${CHROOT}/root/k3s_installation.sh"
 
 chroot "${CHROOT}" /bin/bash -c "chmod +755 /root/smart-garden-mesh.sh"
 chroot "${CHROOT}" /bin/bash -c "chmod +755 /root/k3s_installation.sh"
