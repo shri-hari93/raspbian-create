@@ -9,7 +9,7 @@
 # after re-customizing. That could be useful for creating a cluster of
 # raspberry pis each with hardcoded static IPs.
 if [[ $# -eq 0 ]] ; then
-    echo "usage: ./build-batman-node -t [type] -n [hostname] -u [k3s_url] -k [k3s_token]"
+    echo "usage: ./build-batman-node -t [type] -n [hostname] -u [k3s_url] -k [k3s_token] -d [dns_ip]"
     exit
 fi
 
@@ -17,7 +17,7 @@ while [[ "$#" -gt 0 ]]
 do
     case $1 in 
         -h|--help)
-        echo "usage: ./build-batman-node -t [type] -n [hostname] -u [k3s_url] -k [k3s_token]"
+        echo "usage: ./build-batman-node -t [type] -n [hostname] -u [k3s_url] -k [k3s_token] -d [dns_ip]"
         exit;;
         -t)
         TYPE="$2"
@@ -30,6 +30,9 @@ do
         ;;
         -k)
         K3S_TOKEN="$2"
+        ;;
+        -d)
+        DNS="$2"
         ;;
     esac
 shift
@@ -71,6 +74,7 @@ case $TYPE in
         cat ./node/bat0 > "${CHROOT}/etc/network/interfaces.d/bat0"
 
         # Add configuration script
+        echo "nameserver ${DNS}" > "${CHROOT}/etc/reslov.conf"
         cat ./node/smart-garden-mesh.sh > "${CHROOT}/root/smart-garden-mesh.sh";; 
     *)
 esac
